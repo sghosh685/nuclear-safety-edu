@@ -1,0 +1,536 @@
+@import "tailwindcss";
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Diagram enhancement animations */
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 12px 4px rgba(59, 130, 246, 0.4);
+  }
+}
+
+@keyframes subtle-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+/* Active diagram component pulse animation */
+.diagram-component-active {
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+/* Mobile touch-zoom support for diagrams */
+.touch-zoom-enabled {
+  touch-action: pinch-zoom pan-x pan-y;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* On mobile, enable zoom gesture on diagrams */
+@media (max-width: 768px) {
+  .theme-dark .rounded-t-xl {
+    touch-action: manipulation;
+    cursor: zoom-in;
+  }
+}
+
+/* Diagram component hover enhancement */
+.theme-dark [class*="cursor-pointer"]:hover {
+  filter: brightness(1.15);
+  transition: filter 0.2s ease;
+}
+
+
+/* Light mode overrides */
+.light {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
+  --bg-card: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --border-color: #e2e8f0;
+}
+
+/* Main backgrounds */
+.light .bg-slate-950 {
+  background-color: #f8fafc !important;
+}
+
+.light .bg-slate-900 {
+  background-color: #ffffff !important;
+}
+
+.light .bg-slate-900\/50 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.light .bg-slate-800 {
+  background-color: #f1f5f9 !important;
+}
+
+.light .bg-slate-800\/50 {
+  background-color: rgba(241, 245, 249, 0.8) !important;
+}
+
+.light .bg-slate-700 {
+  background-color: #e2e8f0 !important;
+}
+
+.light .bg-slate-700\/50 {
+  background-color: rgba(226, 232, 240, 0.8) !important;
+}
+
+.light .bg-slate-600 {
+  background-color: #cbd5e1 !important;
+}
+
+/* Text colors */
+.light .text-slate-100,
+.light .text-slate-200 {
+  color: #0f172a !important;
+}
+
+.light .text-slate-300 {
+  color: #1e293b !important;
+}
+
+.light .text-slate-400 {
+  color: #475569 !important;
+}
+
+.light .text-slate-500 {
+  color: #64748b !important;
+}
+
+.light .text-slate-600 {
+  color: #64748b !important;
+}
+
+.light .text-white {
+  color: #0f172a !important;
+}
+
+/* Breadcrumb contrast improvements in light mode */
+.light nav[aria-label="Breadcrumb"] .text-slate-500 {
+  color: #475569 !important;
+}
+
+.light nav[aria-label="Breadcrumb"] .text-slate-600 {
+  color: #334155 !important;
+}
+
+.light nav[aria-label="Breadcrumb"] .text-slate-300 {
+  color: #1e293b !important;
+}
+
+/* Border colors */
+.light .border-slate-800 {
+  border-color: #e2e8f0 !important;
+}
+
+.light .border-slate-700 {
+  border-color: #cbd5e1 !important;
+}
+
+.light .border-slate-900 {
+  border-color: #e2e8f0 !important;
+}
+
+.light .border-slate-600 {
+  border-color: #94a3b8 !important;
+}
+
+/* Accent colors - slightly darker for light mode contrast */
+.light .text-blue-400 {
+  color: #2563eb !important;
+}
+
+.light .text-cyan-400 {
+  color: #0891b2 !important;
+}
+
+.light .text-teal-400 {
+  color: #0d9488 !important;
+}
+
+.light .text-emerald-400,
+.light .text-green-400 {
+  color: #059669 !important;
+}
+
+.light .text-amber-400 {
+  color: #d97706 !important;
+}
+
+.light .text-orange-400 {
+  color: #ea580c !important;
+}
+
+.light .text-rose-400 {
+  color: #e11d48 !important;
+}
+
+.light .text-purple-400 {
+  color: #9333ea !important;
+}
+
+.light .text-yellow-400 {
+  color: #ca8a04 !important;
+}
+
+/* Background accent colors */
+.light .bg-blue-500\/10,
+.light .bg-blue-500\/20 {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+.light .bg-cyan-500\/10,
+.light .bg-cyan-500\/20,
+.light .bg-cyan-500\/30 {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+}
+
+.light .bg-teal-500\/10,
+.light .bg-teal-500\/20 {
+  background-color: rgba(20, 184, 166, 0.15) !important;
+}
+
+.light .bg-emerald-500\/10,
+.light .bg-green-500\/10,
+.light .bg-green-500\/20 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+
+.light .bg-amber-500\/10,
+.light .bg-amber-500\/20,
+.light .bg-amber-500\/30 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+.light .bg-orange-500\/10,
+.light .bg-orange-500\/20 {
+  background-color: rgba(249, 115, 22, 0.15) !important;
+}
+
+.light .bg-rose-500\/10,
+.light .bg-rose-500\/20 {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+}
+
+.light .bg-purple-500\/10,
+.light .bg-purple-500\/20 {
+  background-color: rgba(168, 85, 247, 0.15) !important;
+}
+
+.light .bg-yellow-500\/10,
+.light .bg-yellow-500\/20 {
+  background-color: rgba(234, 179, 8, 0.15) !important;
+}
+
+/* Gradients */
+.light .bg-gradient-to-b.from-slate-800.to-slate-900 {
+  background: linear-gradient(to bottom, #f1f5f9, #e2e8f0) !important;
+}
+
+/* Reactor diagrams - keep them dark for visibility */
+.light .rounded-t-xl.bg-gradient-to-b.from-slate-800.to-slate-900,
+.light .rounded-xl.bg-gradient-to-b.from-slate-800.to-slate-900 {
+  background: linear-gradient(to bottom, #1e293b, #0f172a) !important;
+}
+
+/* Keep diagram text light on dark diagram background */
+.light .rounded-t-xl.bg-gradient-to-b .text-slate-400,
+.light .theme-dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.light .rounded-t-xl .text-blue-400,
+.light .theme-dark .text-blue-400 {
+  color: #60a5fa !important;
+}
+
+.light .rounded-t-xl .text-cyan-400,
+.light .theme-dark .text-cyan-400 {
+  color: #22d3ee !important;
+}
+
+.light .rounded-t-xl .text-slate-300,
+.light .theme-dark .text-slate-300 {
+  color: #cbd5e1 !important;
+}
+
+/* Form inputs */
+.light input,
+.light select,
+.light textarea {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.light input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Cards and panels */
+.light .rounded-xl.border,
+.light .rounded-2xl.border {
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Hover states */
+.light .hover\:bg-slate-800:hover {
+  background-color: #e2e8f0 !important;
+}
+
+.light .hover\:bg-slate-700:hover {
+  background-color: #cbd5e1 !important;
+}
+
+/* Active/selected states */
+.light .bg-blue-600 {
+  background-color: #2563eb !important;
+}
+
+.light .bg-blue-600 .text-white,
+.light .bg-blue-600 span {
+  color: #ffffff !important;
+}
+
+/* Footer */
+.light footer {
+  background-color: #f1f5f9 !important;
+}
+
+/* Tooltips and dropdowns - keep dark for contrast */
+.light .absolute.bg-slate-900,
+.light .absolute.bg-slate-800 {
+  background-color: #1e293b !important;
+}
+
+.light .absolute.bg-slate-900 .text-slate-200,
+.light .absolute.bg-slate-900 .text-slate-300,
+.light .absolute.bg-slate-800 .text-slate-200,
+.light .absolute.bg-slate-800 .text-slate-300 {
+  color: #e2e8f0 !important;
+}
+
+.light .absolute.bg-slate-900 .text-slate-500,
+.light .absolute.bg-slate-800 .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+/* Scrollbar for light mode */
+.light ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.light ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ===========================================
+   THEME-DARK: Sections that stay dark in light mode
+   These rules MUST come AFTER all other light mode rules
+   to ensure proper CSS specificity.
+   =========================================== */
+
+/* Preserve dark backgrounds for theme-dark containers */
+.light .theme-dark {
+  background-color: #0f172a !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  border-radius: 0.75rem;
+}
+
+.light .theme-dark .bg-slate-950 {
+  background-color: #020617 !important;
+}
+
+.light .theme-dark .bg-slate-900,
+.light .theme-dark.bg-slate-900 {
+  background-color: #0f172a !important;
+}
+
+.light .theme-dark .bg-slate-900\/50 {
+  background-color: rgba(15, 23, 42, 0.95) !important;
+}
+
+.light .theme-dark .bg-slate-800,
+.light .theme-dark.bg-slate-800,
+.light .theme-dark .bg-slate-800\/50,
+.light .theme-dark .bg-slate-800\/95 {
+  background-color: #1e293b !important;
+}
+
+.light .theme-dark .bg-slate-700 {
+  background-color: #334155 !important;
+}
+
+.light .theme-dark .bg-slate-600 {
+  background-color: #475569 !important;
+}
+
+/* Preserve dark gradients */
+.light .theme-dark .bg-gradient-to-b {
+  background: linear-gradient(to bottom, #1e293b, #0f172a) !important;
+}
+
+/* Preserve light text colors in theme-dark */
+.light .theme-dark .text-white {
+  color: #ffffff !important;
+}
+
+.light .theme-dark .text-slate-100,
+.light .theme-dark .text-slate-200 {
+  color: #e2e8f0 !important;
+}
+
+.light .theme-dark .text-slate-300 {
+  color: #cbd5e1 !important;
+}
+
+.light .theme-dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.light .theme-dark .text-slate-500 {
+  color: #64748b !important;
+}
+
+/* Preserve accent colors in theme-dark */
+.light .theme-dark .text-blue-400 {
+  color: #60a5fa !important;
+}
+
+.light .theme-dark .text-cyan-400 {
+  color: #22d3ee !important;
+}
+
+.light .theme-dark .text-teal-400 {
+  color: #2dd4bf !important;
+}
+
+.light .theme-dark .text-green-400,
+.light .theme-dark .text-emerald-400 {
+  color: #4ade80 !important;
+}
+
+.light .theme-dark .text-yellow-400 {
+  color: #facc15 !important;
+}
+
+.light .theme-dark .text-amber-400 {
+  color: #fbbf24 !important;
+}
+
+.light .theme-dark .text-orange-400 {
+  color: #fb923c !important;
+}
+
+.light .theme-dark .text-rose-400 {
+  color: #fb7185 !important;
+}
+
+.light .theme-dark .text-purple-400 {
+  color: #c084fc !important;
+}
+
+/* Preserve dark borders in theme-dark */
+.light .theme-dark .border-slate-700 {
+  border-color: #334155 !important;
+}
+
+.light .theme-dark .border-slate-800,
+.light .theme-dark.border-slate-800 {
+  border-color: #1e293b !important;
+}
+
+.light .theme-dark .border-slate-900 {
+  border-color: #0f172a !important;
+}
+
+/* Preserve accent backgrounds in theme-dark */
+.light .theme-dark .bg-blue-500\/10,
+.light .theme-dark.bg-blue-500\/10 {
+  background-color: rgba(30, 58, 138, 0.85) !important;
+}
+
+/* Preserve text-blue colors for Key Feature callouts */
+.light .theme-dark .text-blue-200 {
+  color: #93c5fd !important;
+}
+
+.light .theme-dark .text-blue-300 {
+  color: #7dd3fc !important;
+}
+
+.light .theme-dark .bg-blue-600 {
+  background-color: #2563eb !important;
+}
+
+.light .theme-dark .bg-blue-600 .text-white,
+.light .theme-dark .bg-blue-600 span {
+  color: #ffffff !important;
+}
+
+/* Theme-dark hover states */
+.light .theme-dark .hover\:bg-slate-800:hover {
+  background-color: #334155 !important;
+}
+
+.light .theme-dark .hover\:bg-slate-700:hover {
+  background-color: #475569 !important;
+}
+
+/* Theme-dark inputs */
+.light .theme-dark input {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+.light .theme-dark input::placeholder {
+  color: #64748b !important;
+}
+
+/* Preserve emerald/green colors for Perspective callouts */
+.light .theme-dark .text-emerald-300 {
+  color: #6ee7b7 !important;
+}
+
+.light .theme-dark .bg-emerald-900\/20 {
+  background-color: rgba(6, 78, 59, 0.85) !important;
+}
+
+.light .theme-dark .border-emerald-500\/30 {
+  border-color: rgba(16, 185, 129, 0.5) !important;
+}
