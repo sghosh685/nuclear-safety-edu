@@ -229,7 +229,7 @@ MIT License - feel free to use for educational purposes.
 
 - Building this to make nuclear energy education accessible
 - Interested in clean tech, energy systems, and climate solutions
-- Connect: [LinkedIn](#) | [GitHub](#)
+- Connect: [LinkedIn](https://www.linkedin.com/in/saikatghosh00/) | [GitHub](https://github.com/sghosh685)
 
 ---
 
