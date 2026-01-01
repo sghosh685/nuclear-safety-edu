@@ -1,13 +1,46 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>nuclear-safety-edu</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO Meta Tags -->
+  <title>Nuclear Safety Education | Interactive Guide to Nuclear Energy</title>
+  <meta name="description"
+    content="Learn about nuclear energy, reactors, safety, and climate impact through interactive diagrams and comprehensive guides. Explore PWR, BWR, CANDU, and RBMK reactor types." />
+  <meta name="keywords"
+    content="nuclear energy, nuclear reactors, nuclear safety, PWR, BWR, CANDU, nuclear education, clean energy, climate" />
+  <meta name="author" content="Saikat Ghosh" />
+
+  <!-- Open Graph / Social Media -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Nuclear Safety Education" />
+  <meta property="og:description"
+    content="Interactive guide to nuclear energy, reactors, and safety. Learn through diagrams, quizzes, and comprehensive content." />
+  <meta property="og:site_name" content="NuclearEdu" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Nuclear Safety Education" />
+  <meta name="twitter:description" content="Interactive guide to nuclear energy, reactors, and safety." />
+
+  <!-- Security -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; 
+                   script-src 'self' 'unsafe-inline' https://plausible.io;
+                   style-src 'self' 'unsafe-inline';
+                   img-src 'self' data:;
+                   connect-src 'self' https://plausible.io;">
+
+  <!-- Plausible Analytics (Privacy-friendly, GDPR compliant) -->
+  <!-- Note: Replace data-domain with your actual Vercel domain after deployment -->
+  <script defer data-domain="yourdomain.vercel.app" src="https://plausible.io/js/script.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

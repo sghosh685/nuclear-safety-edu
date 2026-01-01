@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Atom, ShieldCheck, AlertTriangle, BookOpen, Menu, X, HelpCircle, Search, Sun, Moon } from 'lucide-react';
+import { Atom, BookOpen, Menu, X, HelpCircle, Search, Sun, Moon, ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -26,13 +26,65 @@ const Navbar = () => {
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
 
-    const navLinks = [
-        { name: 'Reactors', path: '/reactors', icon: Atom },
-        { name: 'Accidents', path: '/accidents', icon: AlertTriangle },
-        { name: 'Safety', path: '/safety', icon: ShieldCheck },
-        { name: 'FAQs', path: '/faq', icon: HelpCircle },
-        { name: 'Quiz', path: '/quiz', icon: BookOpen },
+    // Mega-menu navigation structure
+    const navStructure = [
+        {
+            name: 'Learn',
+            icon: BookOpen,
+            dropdown: [
+                { name: 'Nuclear Basics', path: '/basics', description: 'Fundamentals of nuclear energy' },
+                { name: 'Reactor Types', path: '/reactors', description: 'PWR, BWR, CANDU, RBMK explained' },
+                { name: 'Accidents & Case Studies', path: '/accidents', description: 'Chernobyl, Fukushima, TMI' },
+                { name: 'Safety Principles', path: '/safety', description: 'Defense in depth' },
+                { name: 'Safety Culture', path: '/safety-culture', description: 'Industry best practices' },
+            ]
+        },
+        {
+            name: 'Understand',
+            icon: HelpCircle,
+            dropdown: [
+                { name: 'Pros & Challenges', path: '/pros-and-challenges', description: 'Balanced perspective' },
+                { name: 'Climate & Nuclear', path: '/climate', description: 'Role in decarbonization' },
+                { name: 'Compare Energy', path: '/compare-energy', description: 'Nuclear vs other sources' },
+                { name: 'Nuclear Waste', path: '/waste', description: 'Storage and disposal' },
+                { name: 'Myths vs Facts', path: '/faq', description: 'Common misconceptions' },
+            ]
+        },
+        {
+            name: 'Explore',
+            icon: Atom,
+            dropdown: [
+                { name: 'Global Nuclear Map', path: '/global-map', description: 'Reactors worldwide' },
+                { name: 'Nuclear in Canada', path: '/canada', description: 'CANDU & domestic industry' },
+                { name: 'Careers', path: '/careers', description: 'Jobs in nuclear' },
+                { name: 'Glossary', path: '/glossary', description: 'Technical terms' },
+                { name: 'Resources', path: '/resources', description: 'Further reading' },
+                { name: 'About This Site', path: '/about', description: 'Project info & mission' },
+                { name: 'Emergency Info', path: '/emergency', description: 'Safety procedures' },
+            ]
+        },
+        {
+            name: 'Quiz',
+            path: '/quiz',
+            icon: BookOpen,
+        }
     ];
+
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setOpenDropdown(null);
+            }
+        };
+        if (openDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+        }
+    }, [openDropdown]);
 
     // Handle search
     useEffect(() => {
@@ -92,23 +144,73 @@ const Navbar = () => {
                     </div>
                     <div className="hidden md:block">
                         <div className="ml-10 flex items-baseline space-x-1">
-                            {navLinks.map((link) => {
-                                const isActive = location.pathname.startsWith(link.path);
-                                return (
-                                    <Link
-                                        key={link.name}
-                                        to={link.path}
-                                        className={clsx(
-                                            'px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-1.5',
-                                            isActive
-                                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
-                                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                                        )}
-                                    >
-                                        <link.icon className="w-4 h-4" />
-                                        {link.name}
-                                    </Link>
-                                );
+                            {navStructure.map((navItem) => {
+                                if (navItem.dropdown) {
+                                    // Dropdown menu item
+                                    const isActive = navItem.dropdown.some(item => location.pathname.startsWith(item.path));
+                                    return (
+                                        <div key={navItem.name} className="relative" ref={openDropdown === navItem.name ? dropdownRef : null}>
+                                            <button
+                                                onMouseEnter={() => setOpenDropdown(navItem.name)}
+                                                onClick={() => setOpenDropdown(openDropdown === navItem.name ? null : navItem.name)}
+                                                className={clsx(
+                                                    'px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-1.5',
+                                                    isActive
+                                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+                                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                                )}
+                                            >
+                                                <navItem.icon className="w-4 h-4" />
+                                                {navItem.name}
+                                                <svg className={clsx('w-3 h-3 transition-transform', openDropdown === navItem.name && 'rotate-180')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+
+                                            {/* Dropdown panel */}
+                                            {openDropdown === navItem.name && (
+                                                <div
+                                                    className="absolute top-full left-0 mt-2 w-72 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50"
+                                                    onMouseLeave={() => setOpenDropdown(null)}
+                                                >
+                                                    {navItem.dropdown.map((item) => (
+                                                        <Link
+                                                            key={item.path}
+                                                            to={item.path}
+                                                            onClick={() => setOpenDropdown(null)}
+                                                            className="block px-4 py-3 border-b border-slate-800 last:border-0 hover:bg-slate-800 transition-colors group"
+                                                        >
+                                                            <div className="font-medium text-slate-200 text-sm group-hover:text-blue-400 transition-colors">
+                                                                {item.name}
+                                                            </div>
+                                                            <div className="text-xs text-slate-500 mt-0.5">
+                                                                {item.description}
+                                                            </div>
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                } else {
+                                    // Regular link (Quiz)
+                                    const isActive = location.pathname.startsWith(navItem.path!);
+                                    return (
+                                        <Link
+                                            key={navItem.name}
+                                            to={navItem.path!}
+                                            className={clsx(
+                                                'px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-1.5',
+                                                isActive
+                                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+                                                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                            )}
+                                        >
+                                            <navItem.icon className="w-4 h-4" />
+                                            {navItem.name}
+                                        </Link>
+                                    );
+                                }
                             })}
                         </div>
                     </div>
@@ -250,24 +352,56 @@ const Navbar = () => {
             {isOpen && (
                 <div className="md:hidden border-t border-slate-800">
                     <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-slate-900">
-                        {navLinks.map((link) => {
-                            const isActive = location.pathname.startsWith(link.path);
-                            return (
-                                <Link
-                                    key={link.name}
-                                    to={link.path}
-                                    onClick={() => setIsOpen(false)}
-                                    className={clsx(
-                                        'block px-3 py-2 rounded-md text-base font-medium flex items-center gap-2',
-                                        isActive
-                                            ? 'bg-blue-600 text-white'
-                                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                                    )}
-                                >
-                                    <link.icon className="w-5 h-5" />
-                                    {link.name}
-                                </Link>
-                            );
+                        {navStructure.map((navItem) => {
+                            if (navItem.dropdown) {
+                                const isExpanded = openDropdown === navItem.name;
+                                return (
+                                    <div key={navItem.name}>
+                                        <button
+                                            onClick={() => setOpenDropdown(isExpanded ? null : navItem.name)}
+                                            className="w-full flex items-center justify-between px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <navItem.icon className="w-5 h-5" />
+                                                {navItem.name}
+                                            </div>
+                                            <ChevronDown className={clsx('w-4 h-4 transition-transform', isExpanded && 'rotate-180')} />
+                                        </button>
+                                        {isExpanded && (
+                                            <div className="ml-6 mt-1 space-y-1">
+                                                {navItem.dropdown.map((item) => (
+                                                    <Link
+                                                        key={item.path}
+                                                        to={item.path}
+                                                        onClick={() => setIsOpen(false)}
+                                                        className="block px-3 py-2 rounded-md text-sm text-slate-400 hover:bg-slate-800 hover:text-white"
+                                                    >
+                                                        {item.name}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            } else {
+                                const isActive = location.pathname.startsWith(navItem.path!);
+                                return (
+                                    <Link
+                                        key={navItem.name}
+                                        to={navItem.path!}
+                                        onClick={() => setIsOpen(false)}
+                                        className={clsx(
+                                            'block px-3 py-2 rounded-md text-base font-medium flex items-center gap-2',
+                                            isActive
+                                                ? 'bg-blue-600 text-white'
+                                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                        )}
+                                    >
+                                        <navItem.icon className="w-5 h-5" />
+                                        {navItem.name}
+                                    </Link>
+                                );
+                            }
                         })}
                     </div>
                 </div>
