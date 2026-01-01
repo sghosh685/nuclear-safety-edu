@@ -1,12 +1,17 @@
 # Nuclear Safety Education Platform
 
-> An interactive guide to nuclear energy, reactors, safety, and climate impact. Making nuclear technology accessible to everyone.
+> 🌍 Making nuclear energy education accessible to everyone through interactive design and technical accuracy.
 
-🔗 **[Live Demo](https://yourdomain.vercel.app)** (Update after deployment)
+[![Live Demo](https://img.shields.io/badge/🌐_Live-Demo-brightgreen)](https://nuclear-safety-edu.vercel.app)
+[![React](https://img.shields.io/badge/React-19.2.0-blue?logo=react)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.4.21-purple?logo=vite)](https://vitejs.dev)
+[![Tailwind](https://img.shields.io/badge/Tailwind-4.1.18-cyan?logo=tailwindcss)](https://tailwindcss.com)
+[![License](https://img.shields.io/badge/License-MIT-green)](./LICENSE)
 
-![Nuclear Safety Education](https://img.shields.io/badge/React-19.2.0-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue) ![Vite](https://img.shields.io/badge/Vite-5.4.21-purple) ![Tailwind](https://img.shields.io/badge/Tailwind-4.1.18-cyan)
+**From fission to Fukushima: Nuclear energy explained through interactive diagrams, balanced analysis, and modern UX.**
 
----
+
 
 ## 📚 Features
 
@@ -225,6 +230,32 @@ MIT License - feel free to use for educational purposes.
 - Building this to make nuclear energy education accessible
 - Interested in clean tech, energy systems, and climate solutions
 - Connect: [LinkedIn](#) | [GitHub](#)
+
+---
+
+## 📚 Data Sources & Citations
+
+This project uses information from authoritative sources to ensure technical accuracy:
+
+**Regulatory & Safety:**
+- [International Atomic Energy Agency (IAEA)](https://www.iaea.org/) - Global nuclear safety standards
+- [U.S. Nuclear Regulatory Commission (NRC)](https://www.nrc.gov/) - Regulatory oversight and safety
+- [Canadian Nuclear Safety Commission (CNSC)](https://nuclearsafety.gc.ca/) - CANDU reactor expertise
+
+**Energy Data:**
+- [U.S. Energy Information Administration (EIA)](https://www.eia.gov/) - Energy statistics and analysis
+- [World Nuclear Association](https://world-nuclear.org/) - Industry data and reports
+- [Our World in Data - Energy](https://ourworldindata.org/energy) - Climate and energy statistics
+
+**Academic & Technical:**
+- MIT OpenCourseWare - Nuclear Engineering courses
+- ITER Project Documentation - Fusion research
+- DOE Office of Nuclear Energy - Advanced reactor R&D
+
+**Accident Analysis:**
+- Official investigation reports (Chernobyl Forum, Fukushima IAEA Mission, TMI President's Commission)
+
+> **Note:** This is an educational project. For official guidance on nuclear safety or regulation, consult the relevant national authority.
 
 ---
 

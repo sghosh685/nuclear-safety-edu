@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software in academic work, please cite it as below."
+type: software
+title: "Nuclear Safety Education Platform"
+abstract: "An interactive web platform for nuclear energy education, featuring reactor diagrams, safety analysis, and climate context. Built with React, TypeScript, and modern web technologies."
+authors:
+  - family-names: "Ghosh"
+    given-names: "Saikat"
+    affiliation: "Independent Researcher"
+repository-code: "https://github.com/sghosh685/nuclear-safety-edu"
+url: "https://nuclear-safety-edu.vercel.app"
+keywords:
+  - nuclear energy
+  - education
+  - interactive learning
+  - clean technology
+  - climate change
+  - reactor design
+  - nuclear safety
+license: MIT
+version: 1.0.0
+date-released: "2026-01-01"
