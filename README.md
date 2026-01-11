@@ -23,7 +23,9 @@
 - **Climate & Nuclear**: Role in decarbonization, carbon-free baseload power
 - **Nuclear Waste**: Storage, disposal, and long-term management
 
-### **Interactive Learning**
+### **Interactive Tools** ✨ NEW in v1.3
+- 🧮 **Dose Calculator**: Personalized annual radiation exposure with shareable results
+- 🎯 **Career Quiz**: Match your interests to 9 nuclear industry career paths
 - 🎮 **Interactive Reactor Diagrams**: Hover to explore PWR components
 - 📊 **Quizzes**: Test your knowledge with localStorage score tracking  
 - 🔍 **Site-Wide Search**: Instant results with keyboard navigation
@@ -31,11 +33,12 @@
 - 📖 **Comprehensive Glossary**: 100+ technical terms explained
 
 ### **Modern UX**
+- 📱 **PWA Support**: Installable app with offline caching
 - 🌓 **Light/Dark Mode**: Theme toggle with smart defaults
 - 📱 **Mobile Responsive**: Touch-optimized for all devices
 - ⚡ **Smooth Animations**: Page transitions with Framer Motion
 - ♿ **Accessible**: WCAG AA compliant, keyboard navigable
-- 🔐 **Privacy-First**: Plausible Analytics (GDPR compliant)
+- 💾 **Auto-Save**: Quiz and calculator progress saved locally
 
 ---
 
@@ -63,15 +66,13 @@ Professional dropdown menus organizing content into logical categories:
 - **Tailwind CSS 4.1** - Utility-first styling
 - **Framer Motion 12.23** - Smooth animations
 - **React Router 7.11** - Client-side routing
+- **vite-plugin-pwa** - Progressive Web App support
 
 ### **Icons & Assets**
 - **Lucide React** - Modern, tree-shakeable SVG icons
 
-### **Analytics & Monitoring**
-- **Plausible Analytics** - Privacy-friendly, GDPR compliant
-
 ### **Deployment**
-- **Vercel** - Hosting platform
+- **Vercel** - Hosting platform with auto-deploy
 - **GitHub** - Version control
 
 ---
@@ -207,13 +208,12 @@ Hover over components in the PWR diagram to see:
 This is an educational project. Contributions welcome!
 
 **Areas for improvement:**
-- Additional reactor types (Gen IV, SMRs, fusion)
-- More interactive simulations
-- Radiation dose calculator
-- Career path quiz
+- Additional reactor types (Gen IV, fusion)
+- Control room simulator
+- 3D reactor models
 - Country-specific pages (France, China, etc.)
 
-See [`nuclear_edu_expansion_roadmap.md`](link) for v1.1+ ideas.
+See [`docs/ROADMAP.md`](./docs/ROADMAP.md) for future expansion plans.
 
 ---
 
@@ -283,15 +283,17 @@ This is an educational project. Content is based on public information from auth
 ## 🔧 Development Notes
 
 ### **Performance**
-- Production build: ~625 KB (gzipped: ~177 KB)
-- TT (Time to Interactive): <3s on 3G
+- Production build: ~692 KB (gzipped: ~194 KB)
+- TTI (Time to Interactive): <3s on 3G
 - Lighthouse Score: 95+ (Performance, Accessibility, SEO)
+- PWA: 12 assets precached for offline support
 
 ### **Browser Support**
 - Chrome/Edge 100+
 - Firefox 100+
 - Safari 15+
 - Mobile browsers (iOS Safari, Chrome Mobile)
+- PWA installable on all platforms
 
 ### **Known Issues**
 - Dev server has esbuild vulnerability (doesn't affect production)
@@ -301,24 +303,24 @@ This is an educational project. Content is based on public information from auth
 
 ## 📈 Roadmap
 
-**v1.0** (Current)
+**v1.3** (Current) ✅
 - ✅ 20+ comprehensive pages
 - ✅ Interactive reactor diagrams
 - ✅ Mega-menu navigation
-- ✅ Quiz system
+- ✅ Quiz system with localStorage
 - ✅ Light/dark mode
+- ✅ **Radiation Dose Calculator** (shareable results, PDF export)
+- ✅ **Career Quiz** (9 nuclear careers, weighted matching)
+- ✅ **PWA Support** (installable, offline caching)
+- ✅ **Nuclear Security Specialist** career path
+- ✅ **SMR context** in career profiles
 
-**v1.1** (Planned)
-- [ ] Radiation dose calculator
-- [ ] Energy economics comparison
-- [ ] Career path quiz
-- [ ] PWA support (offline mode)
-
-**v2.0** (Future)
+**v2.0** (Planned)
 - [ ] Control room simulator
 - [ ] 3D reactor models (Three.js)
+- [ ] Energy economics comparison tool
 - [ ] Country-specific pages
-- [ ] Community forums
+- [ ] Discussion forums
 
 ---
 
