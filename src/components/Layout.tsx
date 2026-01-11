@@ -54,6 +54,7 @@ const Navbar = () => {
             name: 'Explore',
             icon: Atom,
             dropdown: [
+                { name: 'Dose Calculator', path: '/dose-calculator', description: 'Your annual radiation exposure' },
                 { name: 'Global Nuclear Map', path: '/global-map', description: 'Reactors worldwide' },
                 { name: 'Nuclear in Canada', path: '/canada', description: 'CANDU & domestic industry' },
                 { name: 'Careers', path: '/careers', description: 'Jobs in nuclear' },

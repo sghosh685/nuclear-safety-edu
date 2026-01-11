@@ -19,6 +19,7 @@ import { ResourcesPage } from './pages/ResourcesPage';
 import { CareersPage } from './pages/CareersPage';
 import { GlobalMapPage } from './pages/GlobalMapPage';
 import { SafetyCulturePage } from './pages/SafetyCulturePage';
+import { DoseCalculatorPage } from './pages/DoseCalculatorPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ThemeProvider } from './contexts/ThemeContext';
 
@@ -49,6 +50,7 @@ function App() {
             <Route path="careers" element={<CareersPage />} />
             <Route path="global-map" element={<GlobalMapPage />} />
             <Route path="safety-culture" element={<SafetyCulturePage />} />
+            <Route path="dose-calculator" element={<DoseCalculatorPage />} />
             {/* 404 catch-all route */}
             <Route path="*" element={<NotFoundPage />} />
           </Route>
