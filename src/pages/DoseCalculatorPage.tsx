@@ -627,40 +627,37 @@ const Results = ({ result, onReset }: { result: DoseResult; onReset: () => void 
         return colors[color] || 'bg-slate-500/20 text-slate-400';
     };
 
-    // Enhancement 1: Share functionality
+    // Enhancement 1: Share functionality - now always downloads
     const handleShare = async () => {
         setIsSharing(true);
         try {
             const imageData = await generateShareableCard(result);
 
-            // Try native share first
-            if (navigator.share && navigator.canShare) {
-                const blob = await (await fetch(imageData)).blob();
-                const file = new File([blob], 'my-radiation-dose.png', { type: 'image/png' });
+            // Always download the image for reliability
+            const link = document.createElement('a');
+            link.download = `my-radiation-dose-${result.totalDose.toFixed(1)}mSv.png`;
+            link.href = imageData;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
-                if (navigator.canShare({ files: [file] })) {
+            // Also try native share if available (mobile)
+            try {
+                if (navigator.share) {
                     await navigator.share({
                         title: 'My Annual Radiation Dose',
                         text: `My annual radiation dose is ${result.totalDose.toFixed(2)} mSv - that's ${result.comparisons.bananaEquivalent.toLocaleString()} bananas! 🍌`,
-                        files: [file],
+                        url: 'https://nuclear-safety-edu.vercel.app/dose-calculator',
                     });
-                } else {
-                    downloadImage(imageData);
                 }
-            } else {
-                downloadImage(imageData);
+            } catch {
+                // Native share not available or cancelled, image already downloaded
             }
         } catch (error) {
             console.error('Share failed:', error);
+            alert('Could not generate share image. Please try the Print Report button instead.');
         }
         setIsSharing(false);
-    };
-
-    const downloadImage = (imageData: string) => {
-        const link = document.createElement('a');
-        link.download = 'my-radiation-dose.png';
-        link.href = imageData;
-        link.click();
     };
 
     // Enhancement 8: PDF Export (simplified version)
@@ -958,9 +955,11 @@ export const DoseCalculatorPage = () => {
 
             switch (e.key) {
                 case 'Enter':
+                    e.preventDefault();
                     if (!showResults) handleNext();
                     break;
                 case 'Escape':
+                    e.preventDefault();
                     if (showResults) {
                         setShowResults(false);
                     } else {
@@ -969,10 +968,16 @@ export const DoseCalculatorPage = () => {
                     break;
                 case 'r':
                 case 'R':
+                    e.preventDefault();
                     setShowResetConfirm(true);
                     break;
                 case '?':
-                    setShowKeyboardHelp(true);
+                case '/':
+                    // Handle both ? (Shift+/) and / key
+                    if (e.shiftKey || e.key === '?') {
+                        e.preventDefault();
+                        setShowKeyboardHelp(true);
+                    }
                     break;
             }
         };

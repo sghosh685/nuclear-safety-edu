@@ -456,6 +456,7 @@ const Footer = () => (
                 <div>
                     <h4 className="font-semibold text-slate-300 mb-3">Explore</h4>
                     <ul className="space-y-2 text-sm">
+                        <li><Link to="/dose-calculator" className="text-blue-400 hover:text-blue-300 transition-colors font-medium">🧮 Dose Calculator</Link></li>
                         <li><Link to="/canada" className="text-slate-500 hover:text-blue-400 transition-colors">Nuclear in Canada</Link></li>
                         <li><Link to="/global-map" className="text-slate-500 hover:text-blue-400 transition-colors">Global Map</Link></li>
                         <li><Link to="/careers" className="text-slate-500 hover:text-blue-400 transition-colors">Careers</Link></li>
