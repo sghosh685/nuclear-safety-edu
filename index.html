@@ -3,8 +3,10 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <link rel="icon" type="image/png" href="/pwa-192x192.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
 
   <!-- SEO Meta Tags -->
   <title>Nuclear Safety Education | Interactive Guide to Nuclear Energy</title>
@@ -20,6 +22,7 @@
   <meta property="og:description"
     content="Interactive guide to nuclear energy, reactors, and safety. Learn through diagrams, quizzes, and comprehensive content." />
   <meta property="og:site_name" content="NuclearEdu" />
+  <meta property="og:url" content="https://nuclear-safety-edu.vercel.app" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
@@ -28,10 +31,11 @@
 
   <!-- Security -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; 
-                   script-src 'self' 'unsafe-inline';
-                   style-src 'self' 'unsafe-inline';
-                   img-src 'self' data:;
-                   connect-src 'self';">
+                   script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com;
+                   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+                   font-src 'self' https://fonts.gstatic.com;
+                   img-src 'self' data: blob:;
+                   connect-src 'self' https://vitals.vercel-insights.com;">
 
   <!-- Analytics: Using Vercel Analytics (free, automatically enabled) -->
   <!-- View analytics at: https://vercel.com/dashboard/analytics -->

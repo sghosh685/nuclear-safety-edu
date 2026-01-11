@@ -20,6 +20,7 @@ import { CareersPage } from './pages/CareersPage';
 import { GlobalMapPage } from './pages/GlobalMapPage';
 import { SafetyCulturePage } from './pages/SafetyCulturePage';
 import { DoseCalculatorPage } from './pages/DoseCalculatorPage';
+import { CareerQuizPage } from './pages/CareerQuizPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ThemeProvider } from './contexts/ThemeContext';
 
@@ -48,6 +49,7 @@ function App() {
             <Route path="glossary" element={<GlossaryPage />} />
             <Route path="resources" element={<ResourcesPage />} />
             <Route path="careers" element={<CareersPage />} />
+            <Route path="career-quiz" element={<CareerQuizPage />} />
             <Route path="global-map" element={<GlobalMapPage />} />
             <Route path="safety-culture" element={<SafetyCulturePage />} />
             <Route path="dose-calculator" element={<DoseCalculatorPage />} />
