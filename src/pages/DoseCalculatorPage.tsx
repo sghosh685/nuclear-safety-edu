@@ -1,18 +1,118 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
     Calculator, MapPin, Home, Stethoscope, Plane, Leaf,
     ChevronRight, ChevronLeft, Check, AlertCircle, Info,
-    Banana, Activity, Shield, Zap, RotateCcw
+    Banana, Activity, Shield, Zap, RotateCcw, Share2,
+    FileText, Atom, Keyboard
 } from 'lucide-react';
 import type { DoseInput, DoseResult } from '../data/doseData';
 import {
     calculateDose, DEFAULT_INPUT,
-    WIZARD_STEPS, REGION_NAMES, RISK_CATEGORIES, REFERENCE_VALUES
+    WIZARD_STEPS, REGION_NAMES, RISK_CATEGORIES, REFERENCE_VALUES,
+    NUCLEAR_PLANT_OPTIONS, OCCUPATIONAL_DOSES
 } from '../data/doseData';
 
-// Progress Bar Component
+// ============================================================================
+// STORAGE KEY FOR PERSISTENCE
+// ============================================================================
+const STORAGE_KEY = 'dose-calculator-state';
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+// Save state to localStorage
+const saveState = (input: DoseInput, step: number) => {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ input, step, timestamp: Date.now() }));
+    } catch (e) {
+        console.warn('Could not save state to localStorage');
+    }
+};
+
+// Load state from localStorage
+const loadState = (): { input: DoseInput; step: number } | null => {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            const data = JSON.parse(saved);
+            // Only restore if saved within last 24 hours
+            if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+                return { input: data.input, step: data.step };
+            }
+        }
+    } catch (e) {
+        console.warn('Could not load state from localStorage');
+    }
+    return null;
+};
+
+// Clear saved state
+const clearState = () => {
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+        console.warn('Could not clear localStorage');
+    }
+};
+
+// ============================================================================
+// KEYBOARD SHORTCUTS MODAL
+// ============================================================================
+const KeyboardShortcutsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+    if (!isOpen) return null;
+
+    const shortcuts = [
+        { key: 'Enter', action: 'Go to next step' },
+        { key: 'Escape', action: 'Go to previous step' },
+        { key: 'Tab', action: 'Navigate between inputs' },
+        { key: '↑ / ↓', action: 'Adjust slider values' },
+        { key: 'R', action: 'Reset calculator' },
+        { key: '?', action: 'Show keyboard shortcuts' },
+    ];
+
+    return (
+        <motion.div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+        >
+            <motion.div
+                className="bg-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 border border-slate-700"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center gap-3 mb-4">
+                    <Keyboard className="w-6 h-6 text-blue-400" />
+                    <h3 className="text-xl font-bold text-white">Keyboard Shortcuts</h3>
+                </div>
+                <div className="space-y-2">
+                    {shortcuts.map((s) => (
+                        <div key={s.key} className="flex justify-between items-center py-2 border-b border-slate-700">
+                            <span className="text-slate-400">{s.action}</span>
+                            <kbd className="px-2 py-1 bg-slate-700 rounded text-sm text-white font-mono">{s.key}</kbd>
+                        </div>
+                    ))}
+                </div>
+                <button
+                    onClick={onClose}
+                    className="mt-4 w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
+                >
+                    Close
+                </button>
+            </motion.div>
+        </motion.div>
+    );
+};
+
+// ============================================================================
+// PROGRESS BAR
+// ============================================================================
 const ProgressBar = ({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) => (
     <div className="flex items-center justify-center gap-2 mb-8">
         {Array.from({ length: totalSteps }, (_, i) => {
@@ -23,7 +123,7 @@ const ProgressBar = ({ currentStep, totalSteps }: { currentStep: number; totalSt
             return (
                 <div key={step} className="flex items-center">
                     <motion.div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${isCompleted ? 'bg-emerald-500 text-white' : ''} ${isCurrent ? 'bg-blue-500 text-white ring-4 ring-blue-500/30' : ''} ${!isCompleted && !isCurrent ? 'bg-slate-700 text-slate-400' : ''}`}
+                        className={`w - 10 h - 10 rounded - full flex items - center justify - center text - sm font - bold transition - colors ${isCompleted ? 'bg-emerald-500 text-white' : ''} ${isCurrent ? 'bg-blue-500 text-white ring-4 ring-blue-500/30' : ''} ${!isCompleted && !isCurrent ? 'bg-slate-700 dark:bg-slate-700 text-slate-400' : ''} `}
                         initial={{ scale: 0.8 }}
                         animate={{ scale: isCurrent ? 1.1 : 1 }}
                         transition={{ type: 'spring', stiffness: 300 }}
@@ -31,7 +131,7 @@ const ProgressBar = ({ currentStep, totalSteps }: { currentStep: number; totalSt
                         {isCompleted ? <Check className="w-5 h-5" /> : step}
                     </motion.div>
                     {step < totalSteps && (
-                        <div className={`w-8 h-1 mx-1 rounded ${isCompleted ? 'bg-emerald-500' : 'bg-slate-700'}`} />
+                        <div className={`w - 8 h - 1 mx - 1 rounded ${isCompleted ? 'bg-emerald-500' : 'bg-slate-700'} `} />
                     )}
                 </div>
             );
@@ -39,16 +139,18 @@ const ProgressBar = ({ currentStep, totalSteps }: { currentStep: number; totalSt
     </div>
 );
 
-// Dose Preview Component
+// ============================================================================
+// DOSE PREVIEW
+// ============================================================================
 const DosePreview = ({ dose }: { dose: number }) => (
     <motion.div
-        className="mt-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700 flex items-center justify-between"
+        className="mt-6 p-4 bg-slate-800/50 dark:bg-slate-800/50 rounded-xl border border-slate-700 flex items-center justify-between"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
     >
         <div className="flex items-center gap-3">
             <Activity className="w-5 h-5 text-blue-400" />
-            <span className="text-slate-400">Current estimated dose:</span>
+            <span className="text-slate-400 dark:text-slate-400">Current estimated dose:</span>
         </div>
         <div className="text-xl font-bold text-blue-400">
             {dose.toFixed(2)} <span className="text-sm font-normal text-slate-500">mSv/year</span>
@@ -56,7 +158,10 @@ const DosePreview = ({ dose }: { dose: number }) => (
     </motion.div>
 );
 
-// Number Input with +/- buttons
+// ============================================================================
+// INPUT COMPONENTS
+// ============================================================================
+
 const NumberInput = ({
     value, onChange, label, icon: Icon, min = 0, max = 100, unit = '', description = ''
 }: {
@@ -68,37 +173,48 @@ const NumberInput = ({
     max?: number;
     unit?: string;
     description?: string;
-}) => (
-    <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-        <div className="flex items-center gap-3 mb-3">
-            <Icon className="w-5 h-5 text-blue-400" />
-            <span className="font-medium text-white">{label}</span>
-        </div>
-        <div className="flex items-center justify-between">
-            <button
-                onClick={() => onChange(Math.max(min, value - 1))}
-                className="w-10 h-10 rounded-lg bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-white font-bold transition-colors"
-                disabled={value <= min}
-            >
-                −
-            </button>
-            <div className="text-center">
-                <div className="text-2xl font-bold text-white">{value}</div>
-                {unit && <div className="text-xs text-slate-500">{unit}</div>}
-            </div>
-            <button
-                onClick={() => onChange(Math.min(max, value + 1))}
-                className="w-10 h-10 rounded-lg bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-white font-bold transition-colors"
-                disabled={value >= max}
-            >
-                +
-            </button>
-        </div>
-        {description && <p className="text-xs text-slate-500 mt-2 text-center">{description}</p>}
-    </div>
-);
+}) => {
+    // Validation: prevent values outside range
+    const handleChange = (newValue: number) => {
+        if (newValue < min) newValue = min;
+        if (newValue > max) newValue = max;
+        onChange(newValue);
+    };
 
-// Select Input
+    return (
+        <div className="bg-slate-800/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+            <div className="flex items-center gap-3 mb-3">
+                <Icon className="w-5 h-5 text-blue-400" />
+                <span className="font-medium text-white dark:text-white">{label}</span>
+            </div>
+            <div className="flex items-center justify-between">
+                <button
+                    onClick={() => handleChange(value - 1)}
+                    className="w-10 h-10 rounded-lg bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-white font-bold transition-colors disabled:opacity-50"
+                    disabled={value <= min}
+                    aria-label={`Decrease ${label} `}
+                >
+                    −
+                </button>
+                <div className="text-center">
+                    <div className="text-2xl font-bold text-white dark:text-white">{value}</div>
+                    {unit && <div className="text-xs text-slate-500">{unit}</div>}
+                </div>
+                <button
+                    onClick={() => handleChange(value + 1)}
+                    className="w-10 h-10 rounded-lg bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-white font-bold transition-colors disabled:opacity-50"
+                    disabled={value >= max}
+                    aria-label={`Increase ${label} `}
+                >
+                    +
+                </button>
+            </div>
+            {description && <p className="text-xs text-slate-500 mt-2 text-center">{description}</p>}
+            {value >= max && <p className="text-xs text-amber-400 mt-1 text-center">Maximum reached</p>}
+        </div>
+    );
+};
+
 const SelectInput = ({
     value, onChange, label, icon: Icon, options, description = ''
 }: {
@@ -109,10 +225,10 @@ const SelectInput = ({
     options: { value: string; label: string }[];
     description?: string;
 }) => (
-    <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+    <div className="bg-slate-800/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-700">
         <div className="flex items-center gap-3 mb-3">
             <Icon className="w-5 h-5 text-blue-400" />
-            <span className="font-medium text-white">{label}</span>
+            <span className="font-medium text-white dark:text-white">{label}</span>
         </div>
         <select
             value={value}
@@ -127,7 +243,6 @@ const SelectInput = ({
     </div>
 );
 
-// Toggle Input
 const ToggleInput = ({
     value, onChange, label, icon: Icon
 }: {
@@ -138,12 +253,13 @@ const ToggleInput = ({
 }) => (
     <button
         onClick={() => onChange(!value)}
-        className={`bg-slate-800/50 rounded-xl p-4 border transition-colors flex items-center gap-3 w-full ${value ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700 hover:border-slate-600'}`}
+        className={`bg - slate - 800 / 50 rounded - xl p - 4 border transition - colors flex items - center gap - 3 w - full ${value ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700 hover:border-slate-600'} `}
+        aria-pressed={value}
     >
-        <Icon className={`w-5 h-5 ${value ? 'text-blue-400' : 'text-slate-500'}`} />
-        <span className={`font-medium ${value ? 'text-white' : 'text-slate-400'}`}>{label}</span>
+        <Icon className={`w - 5 h - 5 ${value ? 'text-blue-400' : 'text-slate-500'} `} />
+        <span className={`font - medium ${value ? 'text-white' : 'text-slate-400'} `}>{label}</span>
         <div className="ml-auto">
-            <div className={`w-12 h-6 rounded-full p-1 transition-colors ${value ? 'bg-blue-500' : 'bg-slate-700'}`}>
+            <div className={`w - 12 h - 6 rounded - full p - 1 transition - colors ${value ? 'bg-blue-500' : 'bg-slate-700'} `}>
                 <motion.div
                     className="w-4 h-4 bg-white rounded-full"
                     animate={{ x: value ? 24 : 0 }}
@@ -154,7 +270,6 @@ const ToggleInput = ({
     </button>
 );
 
-// Slider Input
 const SliderInput = ({
     value, onChange, label, icon: Icon, min = 0, max = 100, step = 1, unit = ''
 }: {
@@ -167,11 +282,11 @@ const SliderInput = ({
     step?: number;
     unit?: string;
 }) => (
-    <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+    <div className="bg-slate-800/50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-700">
         <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
                 <Icon className="w-5 h-5 text-blue-400" />
-                <span className="font-medium text-white">{label}</span>
+                <span className="font-medium text-white dark:text-white">{label}</span>
             </div>
             <span className="text-blue-400 font-bold">{value} {unit}</span>
         </div>
@@ -183,6 +298,7 @@ const SliderInput = ({
             value={value}
             onChange={(e) => onChange(Number(e.target.value))}
             className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            aria-label={label}
         />
         <div className="flex justify-between text-xs text-slate-500 mt-1">
             <span>{min} {unit}</span>
@@ -191,7 +307,10 @@ const SliderInput = ({
     </div>
 );
 
-// Step 1: Location
+// ============================================================================
+// STEP COMPONENTS
+// ============================================================================
+
 const StepLocation = ({ input, setInput }: { input: DoseInput; setInput: (i: DoseInput) => void }) => (
     <div className="space-y-6">
         <div className="text-center mb-8">
@@ -220,19 +339,28 @@ const StepLocation = ({ input, setInput }: { input: DoseInput; setInput: (i: Dos
             unit="m"
         />
 
+        {/* Enhancement 7: Distance from Nuclear Plant */}
+        <SelectInput
+            value={input.nuclearPlantProximity}
+            onChange={(v) => setInput({ ...input, nuclearPlantProximity: v as DoseInput['nuclearPlantProximity'] })}
+            label="Distance from Nuclear Plant"
+            icon={Atom}
+            options={NUCLEAR_PLANT_OPTIONS}
+            description="Nuclear plants emit negligible radiation - well below regulatory limits."
+        />
+
         <div className="p-4 bg-blue-900/20 border border-blue-500/30 rounded-xl">
             <div className="flex items-start gap-3">
                 <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-slate-300">
-                    <strong className="text-blue-400">Why altitude matters:</strong> Cosmic radiation increases with altitude.
-                    People living in Denver (1,600m) receive about 50% more cosmic radiation than those at sea level.
+                    <strong className="text-blue-400">Did you know?</strong> Nuclear plants contribute less than 0.1%
+                    of public radiation exposure. The NRC limits public doses near plants to 1 mSv/year additional.
                 </div>
             </div>
         </div>
     </div>
 );
 
-// Step 2: Home
 const StepHome = ({ input, setInput }: { input: DoseInput; setInput: (i: DoseInput) => void }) => (
     <div className="space-y-6">
         <div className="text-center mb-8">
@@ -279,15 +407,14 @@ const StepHome = ({ input, setInput }: { input: DoseInput; setInput: (i: DoseInp
             <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-slate-300">
-                    <strong className="text-amber-400">Radon is #1:</strong> Radon gas (from natural uranium in soil)
-                    accounts for about half of all natural radiation exposure. Testing your home is the only way to know your level.
+                    <strong className="text-amber-400">Radon is reducible:</strong> Radon exposure can be significantly
+                    reduced through home ventilation and basement sealing. Testing your home is the first step.
                 </div>
             </div>
         </div>
     </div>
 );
 
-// Step 3: Medical
 const StepMedical = ({ input, setInput }: { input: DoseInput; setInput: (i: DoseInput) => void }) => (
     <div className="space-y-6">
         <div className="text-center mb-8">
@@ -305,19 +432,28 @@ const StepMedical = ({ input, setInput }: { input: DoseInput; setInput: (i: Dose
             <NumberInput value={input.ctAbdomen} onChange={(v) => setInput({ ...input, ctAbdomen: v })} label="CT Scans (Abdomen)" icon={Activity} max={10} description="10.0 mSv each" />
         </div>
 
+        {/* Enhancement 3: Other Medical Procedures */}
+        <NumberInput
+            value={input.otherMedical}
+            onChange={(v) => setInput({ ...input, otherMedical: v })}
+            label="Other Scans (PET, Nuclear Medicine, Fluoroscopy)"
+            icon={Activity}
+            max={20}
+            description="~0.5 mSv each average. Includes PET scans, nuclear medicine studies, fluoroscopy."
+        />
+
         <div className="p-4 bg-rose-900/20 border border-rose-500/30 rounded-xl">
             <div className="flex items-start gap-3">
                 <Info className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-slate-300">
-                    <strong className="text-rose-400">Medical doses are beneficial:</strong> The benefit of diagnosing
-                    medical conditions typically far outweighs the small radiation risk. Never skip needed medical imaging.
+                    <strong className="text-rose-400">Medical doses are beneficial:</strong> The diagnostic benefit of medical imaging
+                    far outweighs the small radiation risk. Never skip needed imaging based on radiation concerns.
                 </div>
             </div>
         </div>
     </div>
 );
 
-// Step 4: Travel
 const StepTravel = ({ input, setInput }: { input: DoseInput; setInput: (i: DoseInput) => void }) => (
     <div className="space-y-6">
         <div className="text-center mb-8">
@@ -334,15 +470,14 @@ const StepTravel = ({ input, setInput }: { input: DoseInput; setInput: (i: DoseI
             <div className="flex items-start gap-3">
                 <Info className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-slate-300">
-                    <strong className="text-cyan-400">At cruising altitude:</strong> Cosmic radiation is about 100x
-                    higher than at sea level. A transatlantic flight gives roughly the same dose as 1 chest X-ray.
+                    <strong className="text-cyan-400">Airline crew perspective:</strong> Airline crew members receive about
+                    {OCCUPATIONAL_DOSES.airline_crew} mSv/year on average from cosmic radiation - well within safe limits.
                 </div>
             </div>
         </div>
     </div>
 );
 
-// Step 5: Lifestyle
 const StepLifestyle = ({ input, setInput }: { input: DoseInput; setInput: (i: DoseInput) => void }) => (
     <div className="space-y-6">
         <div className="text-center mb-8">
@@ -358,7 +493,8 @@ const StepLifestyle = ({ input, setInput }: { input: DoseInput; setInput: (i: Do
                 <div className="flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                     <div className="text-sm text-slate-300">
-                        <strong className="text-red-400">Important:</strong> Smoking delivers radiation directly to lung tissue via polonium-210 in tobacco.
+                        <strong className="text-red-400">Health priority:</strong> Smoking delivers radiation via polonium-210 and
+                        has many other health risks. Quitting is the single best thing you can do for your health.
                     </div>
                 </div>
             </motion.div>
@@ -372,28 +508,112 @@ const StepLifestyle = ({ input, setInput }: { input: DoseInput; setInput: (i: Do
                 <Info className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-slate-300">
                     <strong className="text-green-400">The Banana Equivalent Dose:</strong> Bananas contain potassium-40,
-                    making them slightly radioactive. Scientists use "BED" as a fun way to compare tiny doses.
+                    making them slightly radioactive. Scientists use "BED" as a fun way to compare tiny doses -
+                    eat your bananas without worry!
                 </div>
             </div>
         </div>
     </div>
 );
 
-// Results Component
+// ============================================================================
+// SHAREABLE RESULTS CARD GENERATOR
+// ============================================================================
+const generateShareableCard = (result: DoseResult): Promise<string> => {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1200;
+        canvas.height = 630;
+        const ctx = canvas.getContext('2d')!;
+
+        // Background gradient
+        const gradient = ctx.createLinearGradient(0, 0, 1200, 630);
+        gradient.addColorStop(0, '#0f172a');
+        gradient.addColorStop(1, '#1e293b');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 1200, 630);
+
+        // Title
+        ctx.fillStyle = '#3b82f6';
+        ctx.font = 'bold 36px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('🍌 MY ANNUAL RADIATION DOSE', 600, 80);
+
+        // Main dose value
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 120px system-ui';
+        ctx.fillText(`${result.totalDose.toFixed(2)} `, 600, 220);
+
+        ctx.font = 'bold 40px system-ui';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('mSv/year', 600, 280);
+
+        // Risk category
+        const riskInfo = RISK_CATEGORIES[result.riskCategory];
+        ctx.font = 'bold 28px system-ui';
+        ctx.fillStyle = riskInfo.color === 'emerald' ? '#10b981' :
+            riskInfo.color === 'green' ? '#22c55e' :
+                riskInfo.color === 'blue' ? '#3b82f6' :
+                    riskInfo.color === 'amber' ? '#f59e0b' : '#ef4444';
+        ctx.fillText(`${riskInfo.label}: ${riskInfo.description} `, 600, 340);
+
+        // Comparisons
+        ctx.font = '24px system-ui';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`= ${result.comparisons.bananaEquivalent.toLocaleString()} Bananas  •  ${result.comparisons.chestXrayEquivalent} Chest X - Rays  •  ${result.comparisons.percentOfWorkerLimit}% of Worker Limit`, 600, 420);
+
+        // Breakdown bar
+        const barY = 480;
+        const barHeight = 40;
+        const barWidth = 1000;
+        const startX = 100;
+
+        const sources = [
+            { value: result.breakdown.radon, color: '#f97316' },
+            { value: result.breakdown.cosmic, color: '#3b82f6' },
+            { value: result.breakdown.terrestrial, color: '#f59e0b' },
+            { value: result.breakdown.medical, color: '#ec4899' },
+            { value: result.breakdown.internal, color: '#22c55e' },
+            { value: result.breakdown.travel, color: '#06b6d4' },
+            { value: result.breakdown.smoking, color: '#dc2626' },
+        ].filter(s => s.value > 0);
+
+        let currentX = startX;
+        sources.forEach(source => {
+            const width = (source.value / result.totalDose) * barWidth;
+            ctx.fillStyle = source.color;
+            ctx.fillRect(currentX, barY, width, barHeight);
+            currentX += width;
+        });
+
+        // Footer
+        ctx.fillStyle = '#64748b';
+        ctx.font = '20px system-ui';
+        ctx.fillText('Calculate yours at nuclear-safety-edu.vercel.app/dose-calculator', 600, 590);
+
+        resolve(canvas.toDataURL('image/png'));
+    });
+};
+
+// ============================================================================
+// RESULTS COMPONENT
+// ============================================================================
 const Results = ({ result, onReset }: { result: DoseResult; onReset: () => void }) => {
     const riskInfo = RISK_CATEGORIES[result.riskCategory];
     const maxDose = 20;
     const gaugePercent = Math.min((result.totalDose / maxDose) * 100, 100);
+    const [isSharing, setIsSharing] = useState(false);
 
     const breakdownItems = [
+        { label: 'Radon', value: result.breakdown.radon, color: 'bg-orange-500' },
         { label: 'Cosmic', value: result.breakdown.cosmic, color: 'bg-blue-500' },
         { label: 'Terrestrial', value: result.breakdown.terrestrial, color: 'bg-amber-500' },
-        { label: 'Radon', value: result.breakdown.radon, color: 'bg-orange-500' },
         { label: 'Internal', value: result.breakdown.internal, color: 'bg-green-500' },
         { label: 'Medical', value: result.breakdown.medical, color: 'bg-rose-500' },
         { label: 'Travel', value: result.breakdown.travel, color: 'bg-cyan-500' },
         { label: 'Smoking', value: result.breakdown.smoking, color: 'bg-red-600' },
         { label: 'Dietary', value: result.breakdown.dietary, color: 'bg-lime-500' },
+        { label: 'Nuclear Plant', value: result.breakdown.nuclearPlant, color: 'bg-purple-500' },
     ].filter(item => item.value > 0.001);
 
     const getRiskColorClass = (color: string) => {
@@ -407,11 +627,124 @@ const Results = ({ result, onReset }: { result: DoseResult; onReset: () => void 
         return colors[color] || 'bg-slate-500/20 text-slate-400';
     };
 
+    // Enhancement 1: Share functionality
+    const handleShare = async () => {
+        setIsSharing(true);
+        try {
+            const imageData = await generateShareableCard(result);
+
+            // Try native share first
+            if (navigator.share && navigator.canShare) {
+                const blob = await (await fetch(imageData)).blob();
+                const file = new File([blob], 'my-radiation-dose.png', { type: 'image/png' });
+
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: 'My Annual Radiation Dose',
+                        text: `My annual radiation dose is ${result.totalDose.toFixed(2)} mSv - that's ${result.comparisons.bananaEquivalent.toLocaleString()} bananas! 🍌`,
+                        files: [file],
+                    });
+                } else {
+                    downloadImage(imageData);
+                }
+            } else {
+                downloadImage(imageData);
+            }
+        } catch (error) {
+            console.error('Share failed:', error);
+        }
+        setIsSharing(false);
+    };
+
+    const downloadImage = (imageData: string) => {
+        const link = document.createElement('a');
+        link.download = 'my-radiation-dose.png';
+        link.href = imageData;
+        link.click();
+    };
+
+    // Enhancement 8: PDF Export (simplified version)
+    const handleDownloadPDF = () => {
+        const printContent = `
+      <html>
+        <head>
+          <title>My Radiation Dose Report</title>
+          <style>
+            body { font-family: system-ui; padding: 40px; max-width: 800px; margin: 0 auto; }
+            h1 { color: #3b82f6; }
+            .dose { font-size: 48px; font-weight: bold; color: #1e293b; }
+            .breakdown { margin-top: 20px; }
+            .bar { height: 20px; background: #e2e8f0; border-radius: 10px; overflow: hidden; margin: 8px 0; }
+            .fill { height: 100%; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            td, th { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+            .disclaimer { margin-top: 30px; font-size: 12px; color: #64748b; }
+          </style>
+        </head>
+        <body>
+          <h1>🍌 My Annual Radiation Dose Report</h1>
+          <p class="dose">${result.totalDose.toFixed(2)} mSv/year</p>
+          <p><strong>${riskInfo.label}:</strong> ${riskInfo.description}</p>
+          
+          <h2>Comparisons</h2>
+          <table>
+            <tr><td>Banana Equivalent</td><td>${result.comparisons.bananaEquivalent.toLocaleString()} bananas</td></tr>
+            <tr><td>Chest X-Ray Equivalent</td><td>${result.comparisons.chestXrayEquivalent} X-rays</td></tr>
+            <tr><td>% of Nuclear Worker Limit</td><td>${result.comparisons.percentOfWorkerLimit}%</td></tr>
+            <tr><td>% of US Average</td><td>${result.comparisons.percentOfUSAverage}%</td></tr>
+          </table>
+          
+          <h2>Dose Breakdown</h2>
+          <table>
+            ${breakdownItems.map(item => `<tr><td>${item.label}</td><td>${item.value.toFixed(3)} mSv</td></tr>`).join('')}
+          </table>
+          
+          <h2>Reference Values</h2>
+          <table>
+            <tr><td>US Average Annual</td><td>${REFERENCE_VALUES.usAverageAnnual} mSv/year</td></tr>
+            <tr><td>Natural Background</td><td>${REFERENCE_VALUES.naturalBackgroundOnly} mSv/year</td></tr>
+            <tr><td>Nuclear Worker Limit</td><td>${REFERENCE_VALUES.nuclearWorkerLimit} mSv/year</td></tr>
+          </table>
+          
+          <p class="disclaimer">
+            <strong>Disclaimer:</strong> This calculator provides educational estimates based on population averages. 
+            Individual doses may vary. For precise measurements, consult a health physicist.
+            <br><br>Data sources: UNSCEAR 2008, NCRP 160, EPA, ACR, EURADOS.
+            <br>Generated at: nuclear-safety-edu.vercel.app/dose-calculator
+          </p>
+        </body>
+      </html>
+    `;
+
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    };
+
+    // Celebratory animation for low doses
+    const showCelebration = result.riskCategory === 'very_low' || result.riskCategory === 'low';
+
     return (
         <div className="space-y-8">
             <div className="text-center">
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 15 }}>
-                    <Calculator className="w-16 h-16 text-blue-400 mx-auto mb-4" />
+                <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                >
+                    {showCelebration ? (
+                        <motion.div
+                            animate={{ rotate: [0, 10, -10, 0] }}
+                            transition={{ duration: 0.5, delay: 0.5 }}
+                        >
+                            <Calculator className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
+                        </motion.div>
+                    ) : (
+                        <Calculator className="w-16 h-16 text-blue-400 mx-auto mb-4" />
+                    )}
                 </motion.div>
                 <h2 className="text-3xl font-bold text-white">Your Annual Radiation Dose</h2>
                 <p className="text-slate-400 mt-2">Based on your inputs</p>
@@ -421,7 +754,7 @@ const Results = ({ result, onReset }: { result: DoseResult; onReset: () => void 
                 <div className="relative w-48 h-24 mx-auto mb-6 overflow-hidden">
                     <div className="absolute inset-0 border-[12px] border-slate-700 rounded-t-full" />
                     <motion.div
-                        className="absolute inset-0 border-[12px] border-blue-500 rounded-t-full origin-bottom"
+                        className={`absolute inset-0 border-[12px] rounded-t-full origin-bottom ${showCelebration ? 'border-emerald-500' : 'border-blue-500'}`}
                         style={{ clipPath: `inset(0 ${100 - gaugePercent}% 0 0)` }}
                         initial={{ clipPath: 'inset(0 100% 0 0)' }}
                         animate={{ clipPath: `inset(0 ${100 - gaugePercent}% 0 0)` }}
@@ -473,22 +806,22 @@ const Results = ({ result, onReset }: { result: DoseResult; onReset: () => void 
                 <div className="space-y-3">
                     {breakdownItems.map((item, i) => (
                         <div key={item.label} className="flex items-center gap-3">
-                            <div className="w-24 text-sm text-slate-400">{item.label}</div>
+                            <div className="w-28 text-sm text-slate-400">{item.label}</div>
                             <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden">
                                 <motion.div
                                     className={`h-full ${item.color}`}
                                     initial={{ width: 0 }}
-                                    animate={{ width: `${(item.value / result.totalDose) * 100}%` }}
+                                    animate={{ width: `${Math.max((item.value / result.totalDose) * 100, 1)}%` }}
                                     transition={{ delay: 0.8 + i * 0.1, duration: 0.5 }}
                                 />
                             </div>
-                            <div className="w-20 text-right text-sm text-white font-medium">{item.value.toFixed(2)} mSv</div>
+                            <div className="w-24 text-right text-sm text-white font-medium">{item.value.toFixed(3)} mSv</div>
                         </div>
                     ))}
                 </div>
             </motion.div>
 
-            {/* Context */}
+            {/* Context - Climate/Sustainability Message */}
             <motion.div className="bg-blue-900/20 border border-blue-500/30 rounded-2xl p-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }}>
                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                     <Info className="w-5 h-5 text-blue-400" />
@@ -501,6 +834,7 @@ const Results = ({ result, onReset }: { result: DoseResult; onReset: () => void 
                             <li>• US Average: {REFERENCE_VALUES.usAverageAnnual} mSv/year</li>
                             <li>• Natural Background: {REFERENCE_VALUES.naturalBackgroundOnly} mSv/year</li>
                             <li>• Nuclear Worker Limit: {REFERENCE_VALUES.nuclearWorkerLimit} mSv/year</li>
+                            <li>• Airline Crew (avg): {OCCUPATIONAL_DOSES.airline_crew} mSv/year</li>
                         </ul>
                     </div>
                     <div>
@@ -508,23 +842,55 @@ const Results = ({ result, onReset }: { result: DoseResult; onReset: () => void 
                         <ul className="mt-2 space-y-1">
                             <li>• Dose ≠ Danger. Context matters.</li>
                             <li>• Our bodies repair low-level radiation damage.</li>
-                            <li>• Effects are only seen above ~100 mSv.</li>
+                            <li>• Health effects only seen above ~100 mSv.</li>
+                            <li>• Radon is the biggest reducible source.</li>
                         </ul>
+                    </div>
+                </div>
+            </motion.div>
+
+            {/* Climate context */}
+            <motion.div className="bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1 }}>
+                <div className="flex items-start gap-3">
+                    <Leaf className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-slate-300">
+                        <strong className="text-emerald-400">Climate perspective:</strong> Nuclear power produces just 12g CO₂/kWh -
+                        similar to wind and 40x less than natural gas. Understanding radiation helps inform energy policy decisions.
                     </div>
                 </div>
             </motion.div>
 
             <div className="text-center text-xs text-slate-500 max-w-2xl mx-auto">
                 <strong>Disclaimer:</strong> This calculator provides educational estimates based on population averages.
-                Individual doses may vary. For precise measurements, consult a health physicist. Sources: UNSCEAR 2008, NCRP 160, EPA, ACR.
+                Individual doses may vary. For precise measurements, consult a health physicist.
+                <br />Sources: UNSCEAR 2008, NCRP 160, EPA, ACR, EURADOS.
             </div>
 
+            {/* Action Buttons - Enhancement 1 & 8 */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button onClick={onReset} className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-medium transition-colors">
                     <RotateCcw className="w-5 h-5" />
                     Recalculate
                 </button>
-                <Link to="/safety" className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium transition-colors">
+                <button
+                    onClick={handleShare}
+                    disabled={isSharing}
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium transition-colors disabled:opacity-50"
+                >
+                    {isSharing ? <RotateCcw className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
+                    Share Results
+                </button>
+                <button
+                    onClick={handleDownloadPDF}
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium transition-colors"
+                >
+                    <FileText className="w-5 h-5" />
+                    Print Report
+                </button>
+            </div>
+
+            <div className="flex justify-center">
+                <Link to="/safety" className="flex items-center justify-center gap-2 px-6 py-3 text-blue-400 hover:text-blue-300 font-medium transition-colors">
                     Learn About Nuclear Safety
                     <ChevronRight className="w-5 h-5" />
                 </Link>
@@ -533,33 +899,87 @@ const Results = ({ result, onReset }: { result: DoseResult; onReset: () => void 
     );
 };
 
-// Main Component
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 export const DoseCalculatorPage = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const [input, setInput] = useState<DoseInput>(DEFAULT_INPUT);
     const [showResults, setShowResults] = useState(false);
+    const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+    const [showResetConfirm, setShowResetConfirm] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Enhancement 6: Load saved state on mount
+    useEffect(() => {
+        const saved = loadState();
+        if (saved) {
+            setInput(saved.input);
+            setCurrentStep(saved.step);
+        }
+    }, []);
+
+    // Enhancement 6: Save state on change
+    useEffect(() => {
+        saveState(input, currentStep);
+    }, [input, currentStep]);
 
     const currentResult = useMemo(() => calculateDose(input), [input]);
 
-    const handleNext = () => {
+    const handleNext = useCallback(() => {
         if (currentStep < 5) {
             setCurrentStep(currentStep + 1);
         } else {
             setShowResults(true);
         }
-    };
+    }, [currentStep]);
 
-    const handleBack = () => {
+    const handleBack = useCallback(() => {
         if (currentStep > 1) {
             setCurrentStep(currentStep - 1);
         }
-    };
+    }, [currentStep]);
 
-    const handleReset = () => {
+    const handleReset = useCallback(() => {
         setCurrentStep(1);
         setInput(DEFAULT_INPUT);
         setShowResults(false);
-    };
+        clearState();
+        setShowResetConfirm(false);
+    }, []);
+
+    // Enhancement 5: Keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Don't handle if user is typing in an input
+            if (['INPUT', 'SELECT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+                return;
+            }
+
+            switch (e.key) {
+                case 'Enter':
+                    if (!showResults) handleNext();
+                    break;
+                case 'Escape':
+                    if (showResults) {
+                        setShowResults(false);
+                    } else {
+                        handleBack();
+                    }
+                    break;
+                case 'r':
+                case 'R':
+                    setShowResetConfirm(true);
+                    break;
+                case '?':
+                    setShowKeyboardHelp(true);
+                    break;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleNext, handleBack, showResults]);
 
     const stepComponents = [
         <StepLocation key={1} input={input} setInput={setInput} />,
@@ -571,20 +991,66 @@ export const DoseCalculatorPage = () => {
 
     if (showResults) {
         return (
-            <motion.div className="max-w-4xl mx-auto" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <Results result={currentResult} onReset={handleReset} />
+            <motion.div ref={containerRef} className="max-w-4xl mx-auto" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <Results result={currentResult} onReset={() => setShowResetConfirm(true)} />
+
+                {/* Reset Confirmation Dialog */}
+                <AnimatePresence>
+                    {showResetConfirm && (
+                        <motion.div
+                            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowResetConfirm(false)}
+                        >
+                            <motion.div
+                                className="bg-slate-800 rounded-2xl p-6 max-w-sm w-full mx-4 border border-slate-700"
+                                initial={{ scale: 0.9 }}
+                                animate={{ scale: 1 }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <h3 className="text-xl font-bold text-white mb-2">Reset Calculator?</h3>
+                                <p className="text-slate-400 mb-4">This will clear all your inputs and start over.</p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowResetConfirm(false)}
+                                        className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleReset}
+                                        className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium"
+                                    >
+                                        Reset
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <KeyboardShortcutsModal isOpen={showKeyboardHelp} onClose={() => setShowKeyboardHelp(false)} />
             </motion.div>
         );
     }
 
     return (
-        <motion.div className="max-w-2xl mx-auto" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <motion.div ref={containerRef} className="max-w-2xl mx-auto" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="text-center mb-8">
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 15 }}>
                     <Calculator className="w-16 h-16 text-blue-400 mx-auto mb-4" />
                 </motion.div>
                 <h1 className="text-4xl font-bold text-white">Radiation Dose Calculator</h1>
                 <p className="text-slate-400 mt-2">Estimate your annual radiation exposure from various sources</p>
+                <button
+                    onClick={() => setShowKeyboardHelp(true)}
+                    className="mt-2 text-xs text-slate-500 hover:text-slate-400 flex items-center gap-1 mx-auto"
+                >
+                    <Keyboard className="w-3 h-3" />
+                    Press ? for keyboard shortcuts
+                </button>
             </div>
 
             <ProgressBar currentStep={currentStep} totalSteps={5} />
@@ -616,6 +1082,46 @@ export const DoseCalculatorPage = () => {
             <div className="text-center mt-6 text-sm text-slate-500">
                 Step {currentStep} of 5: {WIZARD_STEPS[currentStep - 1].name}
             </div>
+
+            {/* Keyboard Help Modal */}
+            <KeyboardShortcutsModal isOpen={showKeyboardHelp} onClose={() => setShowKeyboardHelp(false)} />
+
+            {/* Reset Confirmation */}
+            <AnimatePresence>
+                {showResetConfirm && (
+                    <motion.div
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowResetConfirm(false)}
+                    >
+                        <motion.div
+                            className="bg-slate-800 rounded-2xl p-6 max-w-sm w-full mx-4 border border-slate-700"
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <h3 className="text-xl font-bold text-white mb-2">Reset Calculator?</h3>
+                            <p className="text-slate-400 mb-4">This will clear all your inputs and start over.</p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowResetConfirm(false)}
+                                    className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleReset}
+                                    className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium"
+                                >
+                                    Reset
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 };

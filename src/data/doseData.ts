@@ -9,12 +9,13 @@ export interface DoseInput {
   // Location
   region: string;
   altitudeMeters: number;
-  
+  nuclearPlantProximity: 'none' | 'beyond_20km' | 'within_20km' | 'within_10km' | 'within_5km';
+
   // Home
   homeType: 'apartment' | 'house_concrete' | 'house_wood' | 'house_brick';
   hasBasement: boolean;
   radonLevel: 'low' | 'average' | 'high' | 'unknown';
-  
+
   // Medical
   chestXrays: number;
   dentalXrays: number;
@@ -23,12 +24,12 @@ export interface DoseInput {
   ctChest: number;
   ctAbdomen: number;
   otherMedical: number;
-  
+
   // Travel
   shortFlights: number;  // <3 hours
   mediumFlights: number; // 3-6 hours
   longFlights: number;   // >6 hours
-  
+
   // Lifestyle
   smokingPacks: number;  // packs per day (0 = non-smoker)
   bananasPerWeek: number;
@@ -46,6 +47,7 @@ export interface DoseResult {
     travel: number;
     smoking: number;
     dietary: number;
+    nuclearPlant: number;
   };
   comparisons: {
     bananaEquivalent: number;
@@ -151,6 +153,61 @@ export const REFERENCE_VALUES = {
 };
 
 // ============================================================================
+// NUCLEAR PLANT PROXIMITY (Nuclear Engineer Input)
+// Based on NRC 10 CFR 20.1301 - Public dose limits
+// ============================================================================
+
+export const NUCLEAR_PLANT_DOSES: Record<string, number> = {
+  'none': 0,           // Not near a plant
+  'within_5km': 0.05,  // mSv/year - well below regulatory limit
+  'within_10km': 0.02, // mSv/year
+  'within_20km': 0.005, // mSv/year
+  'beyond_20km': 0.001, // Negligible
+};
+
+export const NUCLEAR_PLANT_OPTIONS = [
+  { value: 'none', label: 'Not near a nuclear plant or unknown' },
+  { value: 'beyond_20km', label: 'Beyond 20 km from a plant' },
+  { value: 'within_20km', label: 'Within 10-20 km of a plant' },
+  { value: 'within_10km', label: 'Within 5-10 km of a plant' },
+  { value: 'within_5km', label: 'Within 5 km of a plant' },
+];
+
+// ============================================================================
+// OCCUPATIONAL REFERENCE (For Context)
+// ============================================================================
+
+export const OCCUPATIONAL_DOSES = {
+  nuclear_worker_avg: 2.0,    // mSv/year actual average (limit is 50)
+  radiologist: 1.5,           // mSv/year average
+  airline_crew: 3.0,          // mSv/year average
+  coal_miner: 2.5,            // mSv/year (radon in mines)
+  astronaut_iss: 180,         // mSv/year on ISS
+};
+
+// ============================================================================
+// RISK CONTEXT (Sustainable Engineer / Climate Analyst Input)
+// Comparative annual risks for perspective
+// ============================================================================
+
+export const RISK_CONTEXT = {
+  driving_10k_miles: 'Risk equivalent to driving 10,000 miles',
+  smoking_1_cigarette: 'Risk equivalent to smoking 1-2 cigarettes',
+  air_pollution_1_week: 'Risk equivalent to 1 week of urban air pollution',
+  eating_100_bananas: 'Contains the potassium-40 of 100 bananas',
+};
+
+// ============================================================================
+// CLIMATE CONTEXT MESSAGING
+// ============================================================================
+
+export const CLIMATE_CONTEXT = {
+  nuclear_carbon: 'Nuclear power produces 12g CO₂/kWh - similar to wind, 40x less than gas.',
+  medical_tradeoff: 'Medical imaging doses are justified by diagnostic benefits.',
+  radon_mitigation: 'Radon is reducible through home ventilation and sealing.',
+};
+
+// ============================================================================
 // CALCULATION FUNCTIONS
 // ============================================================================
 
@@ -160,20 +217,20 @@ export function calculateDose(input: DoseInput): DoseResult {
   const cosmicBase = 0.39; // Sea level cosmic
   const altitudeBonus = (input.altitudeMeters / 1000) * ALTITUDE_FACTOR;
   const cosmic = cosmicBase + altitudeBonus;
-  
+
   // 2. Terrestrial radiation (from ground/soil)
   const terrestrial = baseBackground - 0.39 - 0.29; // Remove cosmic and internal from regional
-  
+
   // 3. Radon
   const radonBase = RADON_DOSES[input.radonLevel];
   const radonBasement = input.hasBasement ? BASEMENT_ADDITIONAL : 0;
   const radon = radonBase + radonBasement + HOME_DOSES[input.homeType];
-  
+
   // 4. Internal (food/water)
   const internal = INTERNAL_DOSE;
-  
+
   // 5. Medical
-  const medical = 
+  const medical =
     (input.chestXrays * MEDICAL_DOSES.chestXray) +
     (input.dentalXrays * MEDICAL_DOSES.dentalXray) +
     (input.mammograms * MEDICAL_DOSES.mammogram) +
@@ -181,28 +238,31 @@ export function calculateDose(input: DoseInput): DoseResult {
     (input.ctChest * MEDICAL_DOSES.ctChest) +
     (input.ctAbdomen * MEDICAL_DOSES.ctAbdomen) +
     (input.otherMedical * MEDICAL_DOSES.otherMedical);
-  
+
   // 6. Travel
-  const travel = 
+  const travel =
     (input.shortFlights * FLIGHT_DOSES.short) +
     (input.mediumFlights * FLIGHT_DOSES.medium) +
     (input.longFlights * FLIGHT_DOSES.long);
-  
+
   // 7. Lifestyle
   const smoking = input.smokingPacks * LIFESTYLE_DOSES.smokingPerPackPerDay;
-  const dietary = 
+  const dietary =
     ((input.bananasPerWeek * 52) * LIFESTYLE_DOSES.bananaEach) +
     ((input.brazilNutsPerWeek * 52) * LIFESTYLE_DOSES.brazilNutHandful);
-  
+
+  // 8. Nuclear Plant Proximity
+  const nuclearPlant = NUCLEAR_PLANT_DOSES[input.nuclearPlantProximity] || 0;
+
   // Total
-  const totalDose = cosmic + terrestrial + radon + internal + medical + travel + smoking + dietary;
-  
+  const totalDose = cosmic + terrestrial + radon + internal + medical + travel + smoking + dietary + nuclearPlant;
+
   // Comparisons
   const bananaEquivalent = Math.round(totalDose / REFERENCE_VALUES.singleBanana);
   const chestXrayEquivalent = Math.round(totalDose / REFERENCE_VALUES.singleChestXray * 10) / 10;
   const percentOfWorkerLimit = Math.round((totalDose / REFERENCE_VALUES.nuclearWorkerLimit) * 100);
   const percentOfUSAverage = Math.round((totalDose / REFERENCE_VALUES.usAverageAnnual) * 100);
-  
+
   // Risk category
   let riskCategory: DoseResult['riskCategory'];
   if (totalDose < 2) {
@@ -216,7 +276,7 @@ export function calculateDose(input: DoseInput): DoseResult {
   } else {
     riskCategory = 'high';
   }
-  
+
   return {
     totalDose: Math.round(totalDose * 100) / 100,
     breakdown: {
@@ -228,6 +288,7 @@ export function calculateDose(input: DoseInput): DoseResult {
       travel: Math.round(travel * 100) / 100,
       smoking: Math.round(smoking * 100) / 100,
       dietary: Math.round(dietary * 1000) / 1000,
+      nuclearPlant: Math.round(nuclearPlant * 1000) / 1000,
     },
     comparisons: {
       bananaEquivalent,
@@ -243,6 +304,7 @@ export function calculateDose(input: DoseInput): DoseResult {
 export const DEFAULT_INPUT: DoseInput = {
   region: 'us_average',
   altitudeMeters: 0,
+  nuclearPlantProximity: 'none',
   homeType: 'house_wood',
   hasBasement: false,
   radonLevel: 'unknown',
