@@ -1,14 +1,72 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
     Briefcase, ChevronRight, ChevronLeft, Check, RotateCcw, Share2,
-    GraduationCap, DollarSign, TrendingUp, Sparkles
+    GraduationCap, DollarSign, TrendingUp, Sparkles, Home, CheckCircle
 } from 'lucide-react';
 import {
     QUIZ_QUESTIONS, calculateQuizResults, CAREER_COLORS,
     type CareerProfile, type QuizResult
 } from '../data/careerData';
+
+// ============================================================================
+// STORAGE KEY
+// ============================================================================
+const STORAGE_KEY = 'nuclear_career_quiz_progress';
+
+interface StoredState {
+    currentQuestion: number;
+    answers: Record<number, number>;
+    timestamp: number;
+}
+
+const saveState = (state: Omit<StoredState, 'timestamp'>) => {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, timestamp: Date.now() }));
+    } catch { /* Ignore storage errors */ }
+};
+
+const loadState = (): StoredState | null => {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            const state = JSON.parse(stored) as StoredState;
+            // Check if state is less than 24 hours old
+            if (Date.now() - state.timestamp < 24 * 60 * 60 * 1000) {
+                return state;
+            }
+        }
+    } catch { /* Ignore storage errors */ }
+    return null;
+};
+
+const clearState = () => {
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch { /* Ignore storage errors */ }
+};
+
+// ============================================================================
+// TOAST NOTIFICATION
+// ============================================================================
+const Toast = ({ message, isVisible }: { message: string; isVisible: boolean }) => (
+    <AnimatePresence>
+        {isVisible && (
+            <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 50 }}
+                className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
+            >
+                <div className="flex items-center gap-2 px-4 py-3 bg-emerald-600 text-white rounded-xl shadow-lg">
+                    <CheckCircle className="w-5 h-5" />
+                    <span>{message}</span>
+                </div>
+            </motion.div>
+        )}
+    </AnimatePresence>
+);
 
 // ============================================================================
 // PROGRESS BAR
@@ -151,20 +209,34 @@ const CareerCard = ({ career, rank, isTop = false }: { career: CareerProfile; ra
 // RESULTS PAGE
 // ============================================================================
 const ResultsPage = ({ result, onRetake }: { result: QuizResult; onRetake: () => void }) => {
-    const handleShare = () => {
+    const [toastMessage, setToastMessage] = useState('');
+    const [showToast, setShowToast] = useState(false);
+
+    const handleShare = useCallback(async () => {
         const text = `I took the Nuclear Career Quiz and I'm a ${result.topMatch.emoji} ${result.topMatch.title}! Find your nuclear career match:`;
         const url = 'https://nuclear-safety-edu.vercel.app/career-quiz';
 
-        if (navigator.share) {
-            navigator.share({ title: 'My Nuclear Career Match', text, url });
-        } else {
-            navigator.clipboard.writeText(`${text}\n${url}`);
-            alert('Link copied to clipboard!');
+        try {
+            if (navigator.share) {
+                await navigator.share({ title: 'My Nuclear Career Match', text, url });
+                setToastMessage('Shared successfully!');
+            } else {
+                await navigator.clipboard.writeText(`${text}\n${url}`);
+                setToastMessage('Link copied to clipboard!');
+            }
+        } catch {
+            // User cancelled or error
+            await navigator.clipboard.writeText(`${text}\n${url}`);
+            setToastMessage('Link copied to clipboard!');
         }
-    };
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+    }, [result.topMatch]);
 
     return (
         <div className="space-y-8">
+            <Toast message={toastMessage} isVisible={showToast} />
+
             <div className="text-center">
                 <motion.div
                     initial={{ scale: 0 }}
@@ -196,9 +268,10 @@ const ResultsPage = ({ result, onRetake }: { result: QuizResult; onRetake: () =>
                 transition={{ delay: 0.4 }}
                 className="bg-slate-800/50 rounded-2xl border border-slate-700 p-6"
             >
-                <h3 className="text-lg font-semibold text-white mb-4">Full Results</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">Full Results</h3>
+                <p className="text-xs text-slate-500 mb-4">Colors indicate career category: 🔵 Operations, 🟣 Engineering, 🟡 Safety, 🟢 Environment</p>
                 <div className="space-y-3">
-                    {result.scores.slice(0, 5).map((item, i) => {
+                    {result.scores.slice(0, 6).map((item, i) => {
                         const colors = CAREER_COLORS[item.career.color] || CAREER_COLORS.blue;
                         return (
                             <div key={item.career.id} className="flex items-center gap-3">
@@ -241,7 +314,7 @@ const ResultsPage = ({ result, onRetake }: { result: QuizResult; onRetake: () =>
                 </button>
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-6">
                 <Link
                     to="/careers"
                     className="flex items-center justify-center gap-2 px-6 py-3 text-blue-400 hover:text-blue-300 font-medium transition-colors"
@@ -266,6 +339,24 @@ export const CareerQuizPage = () => {
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState<Record<number, number>>({});
     const [showResults, setShowResults] = useState(false);
+    const [isRestored, setIsRestored] = useState(false);
+
+    // Load saved state on mount
+    useEffect(() => {
+        const savedState = loadState();
+        if (savedState && Object.keys(savedState.answers).length > 0) {
+            setCurrentQuestion(savedState.currentQuestion);
+            setAnswers(savedState.answers);
+            setIsRestored(true);
+        }
+    }, []);
+
+    // Save state on change
+    useEffect(() => {
+        if (Object.keys(answers).length > 0 && !showResults) {
+            saveState({ currentQuestion, answers });
+        }
+    }, [currentQuestion, answers, showResults]);
 
     const result = useMemo(() => {
         if (!showResults) return null;
@@ -274,6 +365,7 @@ export const CareerQuizPage = () => {
 
     const handleSelect = (optionIndex: number) => {
         setAnswers({ ...answers, [QUIZ_QUESTIONS[currentQuestion].id]: optionIndex });
+        setIsRestored(false);
     };
 
     const handleNext = () => {
@@ -281,6 +373,7 @@ export const CareerQuizPage = () => {
             setCurrentQuestion(currentQuestion + 1);
         } else {
             setShowResults(true);
+            clearState();
         }
     };
 
@@ -294,6 +387,7 @@ export const CareerQuizPage = () => {
         setCurrentQuestion(0);
         setAnswers({});
         setShowResults(false);
+        clearState();
     };
 
     if (showResults && result) {
@@ -316,6 +410,17 @@ export const CareerQuizPage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
         >
+            {/* Exit/Home Link */}
+            <div className="mb-6">
+                <Link
+                    to="/"
+                    className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                    <Home className="w-4 h-4" />
+                    Exit to Home
+                </Link>
+            </div>
+
             {/* Header */}
             {currentQuestion === 0 && (
                 <div className="text-center mb-8">
@@ -328,6 +433,16 @@ export const CareerQuizPage = () => {
                     </motion.div>
                     <h1 className="text-4xl font-bold text-white">Nuclear Career Quiz</h1>
                     <p className="text-slate-400 mt-2">Discover which nuclear industry career matches your interests and skills</p>
+                    {isRestored && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded-lg text-sm"
+                        >
+                            <CheckCircle className="w-4 h-4" />
+                            Progress restored! Continue where you left off.
+                        </motion.div>
+                    )}
                 </div>
             )}
 
@@ -348,7 +463,7 @@ export const CareerQuizPage = () => {
                 />
             </AnimatePresence>
 
-            {/* Navigation */}
+            {/* Navigation with back indicator */}
             <div className="flex justify-between mt-8">
                 <button
                     onClick={handleBack}
@@ -357,6 +472,7 @@ export const CareerQuizPage = () => {
                         ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
                         : 'bg-slate-700 hover:bg-slate-600 text-white'
                         }`}
+                    title={currentQuestion > 0 ? 'Go back to previous question' : 'This is the first question'}
                 >
                     <ChevronLeft className="w-5 h-5" />
                     Back
@@ -376,7 +492,7 @@ export const CareerQuizPage = () => {
             </div>
 
             <p className="text-center text-xs text-slate-500 mt-6">
-                Answer honestly - there are no wrong answers!
+                Answer honestly - there are no wrong answers! Your progress is saved automatically.
             </p>
         </motion.div>
     );

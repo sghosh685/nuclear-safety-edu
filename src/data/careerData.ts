@@ -25,7 +25,7 @@ export const CAREERS: CareerProfile[] = [
         emoji: '⚛️',
         description: 'Control the heart of the nuclear plant from the control room. Monitor systems, respond to alarms, and ensure safe operation 24/7.',
         salary: '$80,000 - $120,000',
-        education: 'High school diploma + on-the-job training, NRC license',
+        education: 'High school diploma + on-the-job training, NRC license. Many operators come from Navy Nuclear programs.',
         skills: ['Attention to detail', 'Calm under pressure', 'Technical aptitude', 'Teamwork'],
         dayInLife: 'Monitor reactor parameters, perform system tests, respond to alarms, document operations',
         growth: 'Senior Reactor Operator → Shift Supervisor → Operations Manager',
@@ -35,11 +35,11 @@ export const CAREERS: CareerProfile[] = [
         id: 'nuclear_engineer',
         title: 'Nuclear Engineer',
         emoji: '🔬',
-        description: 'Design, analyze, and improve nuclear systems. Work on reactor physics, thermal hydraulics, and safety analysis.',
+        description: 'Design, analyze, and improve nuclear systems. Work on reactor physics, thermal hydraulics, safety analysis, and emerging SMR (Small Modular Reactor) technology that\'s revolutionizing the industry.',
         salary: '$90,000 - $150,000',
-        education: "Bachelor's or Master's in Nuclear Engineering",
-        skills: ['Advanced math', 'Problem solving', 'Computer modeling', 'Technical writing'],
-        dayInLife: 'Run simulations, analyze data, write reports, collaborate with teams',
+        education: "Bachelor's or Master's in Nuclear Engineering (ABET accredited preferred)",
+        skills: ['Advanced math', 'Problem solving', 'Computer modeling', 'Technical writing', 'SMR design'],
+        dayInLife: 'Run simulations, analyze data, write reports, collaborate with teams on advanced reactor designs',
         growth: 'Junior Engineer → Senior Engineer → Principal Engineer → Director',
         color: 'purple'
     },
@@ -114,6 +114,18 @@ export const CAREERS: CareerProfile[] = [
         dayInLife: 'Plan dismantlement, oversee crews, manage waste, document progress',
         growth: 'Field Engineer → Project Lead → Decommissioning Manager',
         color: 'orange'
+    },
+    {
+        id: 'nuclear_security',
+        title: 'Nuclear Security Specialist',
+        emoji: '🔐',
+        description: 'Protect nuclear facilities from threats. Post-9/11, this is a critical role ensuring physical security, cybersecurity, and emergency response readiness.',
+        salary: '$70,000 - $120,000',
+        education: "Bachelor's in Criminal Justice, Security Management, or related. Military/law enforcement background valued.",
+        skills: ['Threat assessment', 'Emergency response', 'Cybersecurity', 'Physical security'],
+        dayInLife: 'Conduct security patrols, monitor access systems, run drills, assess vulnerabilities',
+        growth: 'Security Officer → Shift Supervisor → Security Manager → Director of Security',
+        color: 'red'
     }
 ];
 
@@ -137,7 +149,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
         id: 1,
         question: "What type of work environment appeals to you most?",
         options: [
-            { text: "A control room with real-time monitoring systems", scores: { reactor_operator: 3, nuclear_engineer: 1 } },
+            { text: "A control room with real-time monitoring systems", scores: { reactor_operator: 3, nuclear_engineer: 1, nuclear_security: 2 } },
             { text: "A research lab with cutting-edge equipment", scores: { fusion_researcher: 3, nuclear_engineer: 2, health_physicist: 1 } },
             { text: "A hospital or clinical setting", scores: { nuclear_medicine: 3 } },
             { text: "Outdoor field sites or industrial facilities", scores: { decommissioning: 3, waste_management: 2 } },
@@ -148,7 +160,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
         id: 2,
         question: "Which statement best describes your ideal workday?",
         options: [
-            { text: "Monitoring systems and responding to situations as they arise", scores: { reactor_operator: 3, health_physicist: 1 } },
+            { text: "Monitoring systems and responding to situations as they arise", scores: { reactor_operator: 3, health_physicist: 1, nuclear_security: 2 } },
             { text: "Running computer simulations and analyzing data", scores: { nuclear_engineer: 3, fusion_researcher: 2 } },
             { text: "Helping patients directly and seeing immediate results", scores: { nuclear_medicine: 3 } },
             { text: "Managing projects and coordinating teams", scores: { decommissioning: 3, waste_management: 2, regulatory_specialist: 1 } },
@@ -159,7 +171,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
         id: 3,
         question: "How do you handle pressure and stress?",
         options: [
-            { text: "I stay calm and focused - I'm great in emergencies", scores: { reactor_operator: 3, nuclear_medicine: 2 } },
+            { text: "I stay calm and focused - I'm great in emergencies", scores: { reactor_operator: 3, nuclear_medicine: 2, nuclear_security: 3 } },
             { text: "I prefer to analyze problems methodically with time to think", scores: { nuclear_engineer: 3, fusion_researcher: 2, regulatory_specialist: 1 } },
             { text: "I break big problems into manageable steps", scores: { decommissioning: 3, waste_management: 2 } },
             { text: "I rely on procedures and checklists", scores: { health_physicist: 3, regulatory_specialist: 2 } }
@@ -192,7 +204,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
         question: "Which skill are you most confident in?",
         options: [
             { text: "Technical problem-solving and math", scores: { nuclear_engineer: 3, fusion_researcher: 3, health_physicist: 2 } },
-            { text: "Staying alert and monitoring multiple things at once", scores: { reactor_operator: 3 } },
+            { text: "Staying alert and monitoring multiple things at once", scores: { reactor_operator: 3, nuclear_security: 2 } },
             { text: "Working with people and patients", scores: { nuclear_medicine: 3, health_physicist: 1 } },
             { text: "Writing and interpreting complex documents", scores: { regulatory_specialist: 3, health_physicist: 1 } },
             { text: "Managing projects and leading teams", scores: { decommissioning: 3, waste_management: 2 } }
@@ -205,7 +217,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
             { text: "Being essential - knowing the power grid depends on me", scores: { reactor_operator: 3 } },
             { text: "Discovery and innovation - pushing the boundaries of science", scores: { fusion_researcher: 3, nuclear_engineer: 2 } },
             { text: "Helping people directly with their health", scores: { nuclear_medicine: 3 } },
-            { text: "Protecting the environment and public safety", scores: { health_physicist: 3, waste_management: 2, regulatory_specialist: 1 } },
+            { text: "Protecting the environment and public safety", scores: { health_physicist: 3, waste_management: 2, regulatory_specialist: 1, nuclear_security: 2 } },
             { text: "Cleaning up and leaving things better than I found them", scores: { decommissioning: 3, waste_management: 2 } }
         ]
     },
@@ -240,7 +252,8 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
             { text: "Heading regulatory affairs for a nuclear company", scores: { regulatory_specialist: 3 } },
             { text: "Running the imaging department at a hospital", scores: { nuclear_medicine: 3 } },
             { text: "Publishing breakthrough research on fusion energy", scores: { fusion_researcher: 3 } },
-            { text: "Leading the cleanup of old nuclear sites", scores: { decommissioning: 3, waste_management: 2 } }
+            { text: "Leading the cleanup of old nuclear sites", scores: { decommissioning: 3, waste_management: 2 } },
+            { text: "Managing security for a nuclear facility", scores: { nuclear_security: 3 } }
         ]
     }
 ];
@@ -302,5 +315,6 @@ export const CAREER_COLORS: Record<string, { bg: string; text: string; border: s
     green: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/50' },
     cyan: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', border: 'border-cyan-500/50' },
     rose: { bg: 'bg-rose-500/20', text: 'text-rose-400', border: 'border-rose-500/50' },
-    orange: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/50' }
+    orange: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/50' },
+    red: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/50' }
 };
