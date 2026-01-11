@@ -1054,7 +1054,7 @@ export const DoseCalculatorPage = () => {
                     className="mt-2 text-xs text-slate-500 hover:text-slate-400 flex items-center gap-1 mx-auto"
                 >
                     <Keyboard className="w-3 h-3" />
-                    Press ? for keyboard shortcuts
+                    Press Shift + ? for keyboard shortcuts
                 </button>
             </div>
 
